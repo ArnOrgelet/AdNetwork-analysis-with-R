@@ -1,0 +1,8 @@
+"";"ID";"Name";"IsAvailable";"AppDownloadBaseURL";"IsMobileAppStore";"IsUpdatedFromAppFans";"SDKDownloadURL"
+"1";1;"none - default";0;"";0;0;""
+"2";2;"Windows [Phone]";1;"http://www.windowsphone.com/s?appid=[APP_UNIQUE_ID]";1;1;"https://addeals.s3.amazonaws.com/SDK/Windows/AdDeals-Windows-apps-SDK-v4_0.zip"
+"3";3;"Windows [Phone/Tablets/PCs]";1;"https://www.microsoft.com/store/apps/[APP_UNIQUE_ID]";1;0;"https://addeals.s3.amazonaws.com/SDK/Windows/AdDeals-Windows-apps-SDK-v4_0.zip"
+"4";4;"iOS [iPhone/iPad/iPod]";1;"https://itunes.apple.com/app/[APP_NAME]/id[APP_UNIQUE_ID]?mt=8";1;0;"https://addeals.s3.amazonaws.com/SDK/UniversalAPIs/Cross-platform-AdDeals-Ads-OpenAPI-v2.03.zip"
+"5";5;"N/A";0;"";0;0;""
+"6";6;"Android [Smartphones/Tablets] ";1;"https://play.google.com/store/apps/details?id=[APP_UNIQUE_ID]";1;0;"https://addeals.s3.amazonaws.com/SDK/UniversalAPIs/Cross-platform-AdDeals-Ads-OpenAPI-v2.03.zip"
+"7";7;"Mobile sites (Web)";1;"";0;0;"https://addeals.s3.amazonaws.com/SDK/UniversalAPIs/Cross-platform-AdDeals-Ads-OpenAPI-v2.03.zip"
