@@ -1,0 +1,88 @@
+#SCRIPT FOR PREDICTION IN REGARDS WITH 
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import sys
+import os
+import sframe
+
+# Handle data not in SFrame format
+stats = sframe.SFrame.read_csv('C:\\Users\\Arnaud\\Documents\\ADDEALS_Tables\\App[2272]-DailyActivityPerCampaignsPerCountryPerSubplatform.csv')
+# SetIDasStrings
+stats['CampaignID'].astype(str)
+stats['CountryID'].astype(str)
+stats['AppAdvertisedID'].astype(str)
+stats['SubPlatformID'].astype(str)
+stats['CVR'].astype(float32)
+#stats['CampaignTargetTypeID'].astype('string')
+#stats['CampaignCostTypeID'].astype('string')
+#stats = sframe.SFrame(stats)
+apps = sframe.SFrame.read_csv('C:\\Users\\Arnaud\\Documents\\ADDEALS_Tables\\ALL_APPS.csv', sep=';')
+apps.fillna('')
+apps.rename(columns={'ISOCode' : 'Country'}, inplace = True)
+##apps.rename(columns={'ID' : 'AppID'}, inplace = True)
+publishers = sframe.SFrame.read_csv('C:\\Users\\Arnaud\\Documents\\ADDEALS_Tables\\ALL_PUBLISHERS.csv', sep=';')
+##publishers.rename(columns={'ID' : 'PublisherID'}, inplace = True)
+countries = sframe.SFrame.read_csv('C:\\Users\\Arnaud\\Documents\\ADDEALS_Tables\\ALL_COUNTRIES.csv', sep=';')
+##countries.rename(columns={'ID' : 'CountryID'}, inplace = True)
+
+##stats2 = pd.merge(stats, countries, left_on = 'CountryID', right_on = 'CountryID', suffixes=('Stats','Country'))
+##stats2 = pd.merge(stats2, apps[['AppID','PlatformID','Orientation','MinimalOSVersion','AppType']], left_on = 'AppAdvertisedID', right_on = 'AppID')
+#stats2 = pd.merge(stats2, publishers, left_on = 'PublisherID', right_on = 'PublisherID')
+##stats2.remane(columns={'Unnamed: 0Stats':'ID'}, inplace=True)
+
+stats2 =stats.join(countries[['ID', 'Country']], on={'CountryID':'ID'}, how='left')
+stats2 = stats2.join( apps[['ID','PlatformID','Orientation','AppType','MinimalOSVersion']], on={'AppAdvertisedID':'ID'}, how='left')
+list(stats2.columns.values)
+
+#we keep a dictionary of the first day a campaign has been lived
+firstDate = dict()
+from datetime import datetime
+for camp in stats2['CampaignID'].unique():
+    for i, c in enumerate(stats2['CampaignID']):
+        if c == camp:
+            firstDate[camp] = datetime.strptime(stats2['StatTime'][i], '%Y-%m-%d')
+            break
+#we compute the number of days since the lauching of the campaign (we do not consider days when no displays were granted for the given campaign) 
+stats2.add_column(sframe.SArray([(datetime.strptime(dt['StatTime'], '%Y-%m-%d') - firstDate[dt['CampaignID']]).days for dt in stats2]).astype(int), 'CampaignLaunchOffset')
+#from sklearn.feature_extraction import DictVectorizer
+#d = DictVectorizer()
+#d.fit_transform(stats2['NameEN']).todense()
+
+train_set, test_set = stats2.random_split(.7,seed=1)
+
+def vectorizeCat(table, from_col, new_col):
+    from sklearn.feature_extraction import DictVectorizer
+    d = DictVectorizer()
+    trans = d.fit_transform(table.select_column(from_col).apply(lambda x:{from_col:x}))
+    trans.toarray()
+    print trans.toarray()
+    #table.add_column( \
+        #.toarray(), new_col)
+    #d.get_feature_names()
+
+train_set,test_set = sframe.SFrame(stats2).random_split(.8,seed=1)
+
+from sklearn.linear_model import LinearRegression
+lr = LinearRegression()
+Xtrain = np.array(train_set[['CampaignLaunchOffset','CampaignTargetType','Orientation']])#, dtype=int32) #train_set[['nuser', 'sess']]#train_set[['CampaignTargetType', 'SubPlatformID', 'NameEN' ]]
+Ytrain = train_set.pack_columns(['CTR','CVR'], dtype=list, new_column_name='outcomes')['outcomes']#np.array( list(train_set['CTR','CVR']), dtype=float)#np.array(train_set['CTR']).reshape(train_set.num_rows(),1) #sframe.SArray([float(train_set['CTR']*1000)], dtype=float64)
+# Ytrain = train_set['CTR'].apply(lambda x:float(x*100))
+Xtest = np.array(test_set[['CampaignLaunchOffset','CampaignTargetType','Orientation']]) 
+Ytest = test_set.pack_columns(['CTR','CVR'], dtype=list, new_column_name='outcomes')['outcomes']
+
+lr.fit(Xtrain.reshape(Xtrain.shape[0],1),Ytrain)#stats2.ix[:, stats2.columns not in ['CTR','CVR'] ], stats2['CVR'])
+lr.score(Xtest.reshape(Xtest.shape[0],1), Ytest)
+
+from matplotlib import pyplot as pl
+pl.figure()
+pl.xlabel('dateOff')
+pl.ylabel('CTR')
+pl.plot(Xtest, Ytest)
+pl.axis([0,30,0,0.5])
+pl.grid()
+pl.scatter()
+pl.show()
+ 
+ 
